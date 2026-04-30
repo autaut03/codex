@@ -440,11 +440,14 @@ fn resolve_bearer_token(
 }
 
 fn validate_mcp_server_name(server_name: &str) -> Result<()> {
-    let re = regex_lite::Regex::new(r"^[a-zA-Z0-9_-]+$")?;
-    if !re.is_match(server_name) {
+    let is_valid = !server_name.is_empty()
+        && server_name
+            .chars()
+            .all(|c| c.is_ascii() && !c.is_ascii_control());
+
+    if !is_valid {
         return Err(anyhow!(
-            "Invalid MCP server name '{server_name}': must match pattern {pattern}",
-            pattern = re.as_str()
+            "Invalid MCP server name '{server_name}': must use printable ASCII characters"
         ));
     }
     Ok(())
@@ -648,6 +651,18 @@ mod tests {
     use super::*;
     use rmcp::model::JsonObject;
     use rmcp::model::Meta;
+
+    #[test]
+    fn mcp_server_name_validation_accepts_printable_ascii() {
+        assert!(validate_mcp_server_name("docs").is_ok());
+        assert!(validate_mcp_server_name("docs/server@example.com").is_ok());
+    }
+
+    #[test]
+    fn mcp_server_name_validation_rejects_empty_and_control_characters() {
+        assert!(validate_mcp_server_name("").is_err());
+        assert!(validate_mcp_server_name("docs\nserver").is_err());
+    }
 
     fn tool_with_connector_meta() -> RmcpTool {
         RmcpTool {

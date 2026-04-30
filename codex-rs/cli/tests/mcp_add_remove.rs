@@ -19,14 +19,25 @@ async fn add_and_remove_server_updates_global_config() -> Result<()> {
 
     let mut add_cmd = codex_command(codex_home.path())?;
     add_cmd
-        .args(["mcp", "add", "docs", "--", "echo", "hello"])
+        .args([
+            "mcp",
+            "add",
+            "docs/server@example.com",
+            "--",
+            "echo",
+            "hello",
+        ])
         .assert()
         .success()
-        .stdout(contains("Added global MCP server 'docs'."));
+        .stdout(contains(
+            "Added global MCP server 'docs/server@example.com'.",
+        ));
 
     let servers = load_global_mcp_servers(codex_home.path()).await?;
     assert_eq!(servers.len(), 1);
-    let docs = servers.get("docs").expect("server should exist");
+    let docs = servers
+        .get("docs/server@example.com")
+        .expect("server should exist");
     match &docs.transport {
         McpServerTransportConfig::Stdio {
             command,
@@ -47,20 +58,24 @@ async fn add_and_remove_server_updates_global_config() -> Result<()> {
 
     let mut remove_cmd = codex_command(codex_home.path())?;
     remove_cmd
-        .args(["mcp", "remove", "docs"])
+        .args(["mcp", "remove", "docs/server@example.com"])
         .assert()
         .success()
-        .stdout(contains("Removed global MCP server 'docs'."));
+        .stdout(contains(
+            "Removed global MCP server 'docs/server@example.com'.",
+        ));
 
     let servers = load_global_mcp_servers(codex_home.path()).await?;
     assert!(servers.is_empty());
 
     let mut remove_again_cmd = codex_command(codex_home.path())?;
     remove_again_cmd
-        .args(["mcp", "remove", "docs"])
+        .args(["mcp", "remove", "docs/server@example.com"])
         .assert()
         .success()
-        .stdout(contains("No MCP server named 'docs' found."));
+        .stdout(contains(
+            "No MCP server named 'docs/server@example.com' found.",
+        ));
 
     let servers = load_global_mcp_servers(codex_home.path()).await?;
     assert!(servers.is_empty());

@@ -26,6 +26,7 @@ use codex_exec_server::Environment;
 use codex_exec_server::HttpRequestParams;
 use codex_login::CodexAuth;
 use codex_mcp::MCP_SANDBOX_STATE_META_CAPABILITY;
+use codex_mcp::qualified_mcp_tool_name_prefix;
 use codex_models_manager::manager::RefreshStrategy;
 
 use codex_protocol::config_types::ReasoningSummary;
@@ -420,8 +421,9 @@ async fn stdio_server_round_trip() -> anyhow::Result<()> {
     let server = responses::start_mock_server().await;
 
     let call_id = "call-123";
-    let server_name = "rmcp";
-    let namespace = format!("mcp__{server_name}__");
+    let server_name = "docs/server@example.com";
+    let namespace = qualified_mcp_tool_name_prefix(server_name);
+    let tool_name = format!("{namespace}echo");
 
     let call_mock = mount_sse_once(
         &server,
@@ -470,9 +472,14 @@ async fn stdio_server_round_trip() -> anyhow::Result<()> {
         })
         .build_remote_aware(&server)
         .await?;
+    wait_for_mcp_tool(&fixture, &tool_name).await?;
+
     fixture
         .codex
-        .submit(read_only_user_turn(&fixture, "call the rmcp echo tool"))
+        .submit(read_only_user_turn(
+            &fixture,
+            "call the Postgres MCP echo tool",
+        ))
         .await?;
 
     let begin_event = wait_for_event(&fixture.codex, |ev| {

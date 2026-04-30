@@ -914,15 +914,12 @@ fn parse_env_pair(raw: &str) -> Result<(String, String), String> {
 }
 
 fn validate_server_name(name: &str) -> Result<()> {
-    let is_valid = !name.is_empty()
-        && name
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+    let is_valid = !name.is_empty() && name.chars().all(|c| c.is_ascii() && !c.is_ascii_control());
 
     if is_valid {
         Ok(())
     } else {
-        bail!("invalid server name '{name}' (use letters, numbers, '-', '_')");
+        bail!("invalid server name '{name}' (use printable ASCII characters)");
     }
 }
 

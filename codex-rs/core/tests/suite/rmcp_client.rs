@@ -442,7 +442,7 @@ async fn stdio_server_round_trip() -> anyhow::Result<()> {
     let final_mock = mount_sse_once(
         &server,
         responses::sse(vec![
-            responses::ev_assistant_message("msg-1", "rmcp echo tool completed successfully."),
+            responses::ev_assistant_message("msg-1", "docs echo tool completed successfully."),
             responses::ev_completed("resp-2"),
         ]),
     )
@@ -476,10 +476,7 @@ async fn stdio_server_round_trip() -> anyhow::Result<()> {
 
     fixture
         .codex
-        .submit(read_only_user_turn(
-            &fixture,
-            "call the Postgres MCP echo tool",
-        ))
+        .submit(read_only_user_turn(&fixture, "call the docs echo tool"))
         .await?;
 
     let begin_event = wait_for_event(&fixture.codex, |ev| {
